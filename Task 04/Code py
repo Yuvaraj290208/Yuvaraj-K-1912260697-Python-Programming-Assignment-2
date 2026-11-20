@@ -1,0 +1,58 @@
+import io
+import time
+
+
+def build_plus(parts: list[str]) -> str:
+    text = ""
+    for p in parts:
+        text += p + ";"
+    return text
+
+
+def build_join(parts: list[str]) -> str:
+    return "".join(f"{p};" for p in parts)
+
+
+def build_stringio(parts: list[str]) -> str:
+    buf = io.StringIO()
+    for p in parts:
+        buf.write(f"{p};")
+    return buf.getvalue()
+
+
+def benchmark(n_lines: int, runs: int = 3) -> None:
+    items = [f"Item{i}:Rs{i % 50}" for i in range(n_lines)]
+    plus_times, join_times, sio_times = [], [], []
+
+    for _ in range(runs):
+        start = time.perf_counter()
+        a = build_plus(items)
+        plus_times.append(time.perf_counter() - start)
+
+        start = time.perf_counter()
+        b = build_join(items)
+        join_times.append(time.perf_counter() - start)
+
+        start = time.perf_counter()
+        c = build_stringio(items)
+        sio_times.append(time.perf_counter() - start)
+
+        assert a == b == c
+
+    print(
+        f"Lines={n_lines:>7} | len={len(b):>7} | "
+        f"+= avg: {sum(plus_times)/runs:.4f}s | "
+        f"join avg: {sum(join_times)/runs:.4f}s | "
+        f"StringIO avg: {sum(sio_times)/runs:.4f}s"
+    )
+
+
+if __name__ == "__main__":
+    items_200k = [f"Item{i}:Rs{i % 50}" for i in range(200_000)]
+    start = time.perf_counter(); a = build_plus(items_200k); t_plus = time.perf_counter() - start
+    start = time.perf_counter(); b = build_join(items_200k); t_join = time.perf_counter() - start
+    print("same text:", a == b, "| length:", len(b))
+    print(f"+= time: {t_plus:.4f} s   join time: {t_join:.4f} s\n")
+
+    for size in (1_000, 10_000, 200_000):
+        benchmark(size, runs=3)
